@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Novaseek</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+--bg:#0a0a0a;
+--card:#111215;
+--muted:#9aa0a6;
+--text:#e8eaed;
+--brand:#4285f4;
+--brand-2:#34a853;
+--brand-3:#fbbc05;
+--brand-4:#ea4335;
+--ring:#3c4043;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+margin:0;
+font-family:'Roboto',system-ui,-apple-system,Segoe UI,Helvetica,Arial;
+background: radial-gradient(80rem 80rem at 50% -10rem,#15181d 10%,#0b0d10 60%,#090b0d 100%);
+color:var(--text);
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+/* header */
+header{
+width:100%;
+max-width:980px;
+padding:16px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+}
+.brand{
+display:flex; align-items:center; gap:10px; user-select:none;
+}
+.brand .dot{
+width:12px; height:12px; border-radius:50%;
+background:linear-gradient(135deg,var(--brand),#8ab4f8);
+box-shadow:0 0 14px #4285f499;
+}
+.logo{
+font-family:'Orbitron',sans-serif;
+font-weight:700; letter-spacing:.06em;
+font-size:28px;
+background: linear-gradient(90deg,#8ab4f8,#a0c3ff);
+-webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+#authBtn{
+width:44px; height:44px; border-radius:50%;
+border:1px solid #2a2e33;
+background:#121418; color:#fff;
+display:grid; place-items:center;
+cursor:pointer; font-weight:700;
+transition:transform .06s ease, border-color .2s;
+box-shadow:0 2px 10px rgb(0 0 0 / .25);
+}
+#authBtn:hover{ border-color:#394046 }
+#authBtn:active{ transform:scale(.96) }
+
+/* auth popup + backdrop */
+#backdrop{
+position:fixed; inset:0; background:rgba(0,0,0,.35);
+display:none; z-index:40;
+}
+#authPopup{
+position:absolute; top:64px; right:16px; z-index:50;
+display:none; width:320px; padding:18px;
+background:#0f1216; border:1px solid #20242a; border-radius:14px;
+box-shadow:0 18px 60px rgb(0 0 0 / .45);
+}
+#authPopup.active{ display:block; }
+#backdrop.active{ display:block; }
+#authPopup h3{ margin:0 0 10px 0; font-size:1.05rem }
+#authPopup input{
+width:100%; padding:12px 14px; margin:8px 0;
+border-radius:12px; border:1px solid #20242a; outline:none;
+background:#0b0d10; color:var(--text); font-size:.95rem;
+transition:border-color .2s;
+}
+#authPopup input:focus{ border-color:#3d4146 }
+#authPopup button{
+width:100%; padding:12px 14px; margin-top:8px;
+border:none; border-radius:999px; cursor:pointer;
+font-weight:700; color:#0b0d10; background:linear-gradient(135deg,#8ab4f8,#5a8ef6);
+}
+#authPopup .link{
+margin-top:8px; text-align:center; font-size:.9rem; color:#aab0b6; cursor:pointer;
+}
+#authPopup .link:hover{ text-decoration:underline }
+
+/* main search section */
+.wrap{
+flex:1; width:100%; max-width:980px; padding:0 16px;
+display:flex; flex-direction:column; align-items:center; gap:18px;
+}
+.hero{
+margin-top:8vh; text-align:center;
+}
+.hero .wordmark{
+font-family:'Orbitron',sans-serif; font-weight:700;
+font-size:54px; letter-spacing:.06em;
+background:linear-gradient(90deg,#8ab4f8,#a0c3ff);
+-webkit-background-clip:text; -webkit-text-fill-color:transparent;
+text-shadow:0 10px 50px #8ab4f822;
+}
+
+/* search bar */
+.search{
+width:100%; max-width:720px;
+display:flex; align-items:center; gap:10px;
+padding:10px 12px; border-radius:999px;
+background:#0b0d10; border:1px solid #20242a;
+box-shadow:0 10px 40px rgb(0 0 0 / .20), inset 0 0 0 999px rgb(255 255 255 / 0);
+transition:border-color .25s, box-shadow .25s;
+}
+.search:focus-within{
+border-color:#2f343a;
+box-shadow:0 18px 60px rgb(0 0 0 / .35);
+}
+.search input{
+flex:1; border:none; outline:none; background:transparent; color:var(--text);
+padding:10px 6px; font-size:1.05rem;
+}
+.round-btn{
+width:42px; height:42px; border-radius:50%;
+border:1px solid #2a2e33; background:#111318; color:#cfd3da;
+display:grid; place-items:center; cursor:pointer;
+transition:transform .06s ease, border-color .2s, background .2s;
+user-select:none;
+}
+.round-btn:hover{ border-color:#394046; background:#141820 }
+.round-btn:active{ transform:scale(.95) }
+.round-btn[disabled]{ opacity:.5; cursor:not-allowed }
+
+/* suggestions chips */
+.chips{
+display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; justify-content:center;
+}
+.chip{
+padding:8px 12px; border-radius:999px; font-size:.92rem; color:#cbd0d6;
+border:1px solid #262a30; background:#101318; cursor:pointer;
+transition:background .2s, border-color .2s, transform .06s ease;
+}
+.chip:hover{ background:#141820; border-color:#2f353c }
+.chip:active{ transform:scale(.97) }
+
+/* result list */
+.results{
+width:100%; max-width:720px; display:flex; flex-direction:column; gap:16px; margin-top:6px;
+}
+.card{
+background:#0e1115; border:1px solid #1d2127; border-radius:14px; padding:16px;
+display:flex; gap:14px; align-items:flex-start;
+box-shadow:0 8px 28px rgb(0 0 0 / .25);
+}
+.thumb{
+width:120px; height:80px; border-radius:10px; object-fit:cover; background:#0b0d10; border:1px solid #20242a;
+}
+.card h3{ margin:0 0 6px 0; font-size:1.05rem }
+.card p{ margin:0; color:#b6bcc3; font-size:.95rem; line-height:1.5 }
+.meta{ margin-top:6px; font-size:.85rem; color:#8f959c }
+
+/* side lists */
+.cols{
+width:100%; max-width:980px; display:grid; grid-template-columns: 1fr 320px; gap:18px; margin-top:18px;
+}
+.panel{
+background:#0e1115; border:1px solid #1d2127; border-radius:14px; padding:14px;
+box-shadow:0 8px 28px rgb(0 0 0 / .25);
+}
+.panel h4{ margin:4px 0 12px 0 }
+.list{ display:flex; flex-direction:column; gap:10px; }
+.list .row{
+display:flex; align-items:center; gap:10px; justify-content:space-between;
+padding:10px 12px; border-radius:12px; border:1px solid #1d2127; background:#0b0d10;
+cursor:pointer; transition:background .2s, border-color .2s;
+}
+.list .row:hover{ background:#12161c; border-color:#262a30 }
+.rank{ width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:#10151c; color:#9aa0a6; border:1px solid #2a2e33; font-size:.85rem; }
+
+/* footer */
+.copyright{
+position:fixed; left:12px; bottom:10px; z-index:5;
+font-size:.85rem; color:#98a0a6;
+background:rgba(10,12,14,.6); backdrop-filter: blur(6px);
+padding:6px 10px; border-radius:10px; border:1px solid #1d2127;
+}
+
+@media (max-width: 900px){
+.cols{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="brand">
+<span class="dot"></span>
+<div class="logo">NovaSeek</div>
+</div>
+<button id="authBtn" title="登入 / 註冊">登入</button>
+<div id="authPopup" aria-modal="true" role="dialog"></div>
+</header>
+
+<!-- 背景遮罩（修正：避免點彈窗內元素被當成外部點擊而關閉） -->
+<div id="backdrop" aria-hidden="true"></div>
+
+<div class="wrap">
+<div class="hero">
+<div class="wordmark">NovaSeek</div>
+</div>
+
+<div class="search" id="searchBox">
+<input id="q" type="text" placeholder="在 Novaseek 上搜尋" autocomplete="off" />
+<button class="round-btn" id="goBtn" title="搜尋" aria-label="搜尋"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#D9D9D9"><path d="M765-144 526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l239 239-51 51ZM384-408q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg></button>
+<button class="round-btn" id="micBtn" title="語音搜尋" aria-label="語音搜尋"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#D9D9D9"><path d="M480-384q-50 0-85-35t-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35Zm0-240Zm-36 480v-99q-98.8-13.1-163.4-87.05Q216-404 216-504h72q0 79.68 56.23 135.84 56.22 56.16 136 56.16Q560-312 616-368.16q56-56.16 56-135.84h72q0 100-64.6 173.95Q614.8-256.1 516-243v99h-72Zm36-312q20.4 0 34.2-13.8Q528-483.6 528-504v-240q0-20.4-13.8-34.2Q500.4-792 480-792q-20.4 0-34.2 13.8Q432-764.4 432-744v240q0 20.4 13.8 34.2Q459.6-456 480-456Z"/></svg></button>
+</div>
+
+<div class="chips" id="aiChips"></div>
+
+<div class="results" id="results" aria-live="polite"></div>
+
+<div class="cols">
+<div></div>
+<div class="panel">
+<h4>熱門搜尋</h4>
+<div class="list" id="trending"></div>
+<h4 style="margin-top:14px;">你的最近搜尋</h4>
+<div class="list" id="recent"></div>
+</div>
+</div>
+</div>
+
+<div class="copyright">Copyright © 2025 novaseek — 保留所有權利。</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
+import {
+getAuth, onAuthStateChanged,
+signInWithEmailAndPassword, createUserWithEmailAndPassword,
+sendPasswordResetEmail, signOut, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
+import {
+getFirestore, collection, getDocs, addDoc, serverTimestamp,
+query, orderBy, limit, where
+} from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
+
+// ====== 你的 Firebase 設定 ======
+const firebaseConfig = {
+apiKey: "AIzaSyA7K4x1Di_xUaVt7MF08LfumJxc10dqa3c",
+authDomain: "sample-firebase-ai-app-df21b.firebaseapp.com",
+projectId: "sample-firebase-ai-app-df21b",
+storageBucket: "sample-firebase-ai-app-df21b.firebasestorage.app",
+messagingSenderId: "762970139210",
+appId: "1:762970139210:web:149e9ab5e9593a484cd4b3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ====== DOM ======
+const authBtn = document.getElementById('authBtn');
+const authPopup = document.getElementById('authPopup');
+const backdrop = document.getElementById('backdrop');
+
+const q = document.getElementById('q');
+const goBtn = document.getElementById('goBtn');
+const micBtn = document.getElementById('micBtn');
+const results = document.getElementById('results');
+const trending = document.getElementById('trending');
+const recent = document.getElementById('recent');
+const aiChips = document.getElementById('aiChips');
+
+let currentUser = null;
+
+// ====== Auth UI（修正版：用 backdrop 控制關閉，不會吃掉內部點擊） ======
+function openAuth(){
+backdrop.classList.add('active');
+authPopup.classList.add('active');
+renderLogin();
+}
+function closeAuth(){
+backdrop.classList.remove('active');
+authPopup.classList.remove('active');
+authPopup.innerHTML = '';
+}
+
+// 點遮罩關閉
+backdrop.addEventListener('click', closeAuth);
+// 阻止彈窗內點擊冒泡到 backdrop
+authPopup.addEventListener('click', (e)=> e.stopPropagation());
+
+function renderLogin(){
+authPopup.innerHTML = `
+<h3>登入 NovaSeek</h3>
+<input id="email" type="email" placeholder="Email" />
+<input id="password" type="password" placeholder="密碼" />
+<button id="loginDo">登入</button>
+<div class="link" id="toRegister">還沒有帳號？註冊</div>
+<div class="link" id="toReset">忘記密碼</div>
+`;
+authPopup.querySelector('#loginDo').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); doLogin(); });
+authPopup.querySelector('#toRegister').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); renderRegister(); });
+authPopup.querySelector('#toReset').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); renderReset(); });
+}
+function renderRegister(){
+authPopup.innerHTML = `
+<h3>註冊 NovaSeek</h3>
+<input id="displayName" type="text" placeholder="顯示名稱（可選）" />
+<input id="email" type="email" placeholder="Email" />
+<input id="password" type="password" placeholder="密碼（至少 6 碼）" />
+<button id="regDo">註冊</button>
+<div class="link" id="toLogin">已有帳號？登入</div>
+`;
+authPopup.querySelector('#regDo').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); doRegister(); });
+authPopup.querySelector('#toLogin').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); renderLogin(); });
+}
+function renderReset(){
+authPopup.innerHTML = `
+<h3>重設密碼</h3>
+<input id="resetEmail" type="email" placeholder="註冊用 Email" />
+<button id="resetDo">寄送重設信</button>
+<div class="link" id="toLogin">回登入</div>
+`;
+authPopup.querySelector('#resetDo').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); doReset(); });
+authPopup.querySelector('#toLogin').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); renderLogin(); });
+}
+
+async function doLogin(){
+const email = authPopup.querySelector('#email').value.trim();
+const password = authPopup.querySelector('#password').value;
+if(!email || !password){ alert('請填寫帳密'); return; }
+try{
+await signInWithEmailAndPassword(auth, email, password);
+closeAuth();
+}catch(e){ alert('登入失敗：' + e.message); }
+}
+async function doRegister(){
+const displayName = authPopup.querySelector('#displayName').value.trim();
+const email = authPopup.querySelector('#email').value.trim();
+const password = authPopup.querySelector('#password').value;
+if(!email || password.length < 6){ alert('請填寫有效 Email 與 6 碼以上密碼'); return; }
+try{
+const cred = await createUserWithEmailAndPassword(auth, email, password);
+if(displayName){ await updateProfile(cred.user, { displayName }); }
+closeAuth();
+}catch(e){ alert('註冊失敗：' + e.message); }
+}
+async function doReset(){
+const email = authPopup.querySelector('#resetEmail').value.trim();
+if(!email){ alert('請填入 Email'); return; }
+try{
+await sendPasswordResetEmail(auth, email);
+alert('已寄出重設密碼信件');
+renderLogin();
+}catch(e){ alert('寄送失敗：' + e.message); }
+}
+
+authBtn.addEventListener('click', ()=>{
+if(currentUser){
+signOut(auth);
+}else{
+openAuth();
+}
+});
+
+onAuthStateChanged(auth,(u)=>{
+currentUser = u || null;
+if(currentUser){
+const ch=(currentUser.displayName?.[0]||currentUser.email?.[0]||'U').toUpperCase();
+authBtn.textContent = ch;
+authBtn.title = `登出（${currentUser.email}）`;
+loadRecent();
+}else{
+authBtn.textContent = '登入';
+authBtn.title = '登入 / 註冊';
+recent.innerHTML = '';
+}
+});
+
+// ====== 搜尋 ======
+goBtn.addEventListener('click', ()=> doSearch(q.value));
+q.addEventListener('keydown', (e)=> { if(e.key === 'Enter') doSearch(q.value); });
+
+let rec;
+if('webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+rec = new SR(); rec.lang = 'zh-TW'; rec.interimResults = false; rec.maxAlternatives = 1;
+rec.onresult = (ev)=>{ const text = ev.results[0][0].transcript; q.value = text; doSearch(text); };
+rec.onerror = (ev)=> alert('語音錯誤：' + ev.error);
+}else{
+micBtn.disabled = true; micBtn.title = '瀏覽器不支援語音';
+}
+micBtn.addEventListener('click', ()=> rec && rec.start());
+
+async function doSearch(keyword){
+const kw = (keyword||'').trim();
+if(!kw){ q.focus(); return; }
+
+// 即時顯示「搜尋中…」
+results.innerHTML = renderLoading();
+
+// 記錄搜尋（searchRecords）
+try{
+await addDoc(collection(db,'searchRecords'), {
+keyword: kw,
+uid: currentUser?.uid || null,
+email: currentUser?.email || null,
+ts: serverTimestamp()
+});
+}catch(e){
+console.warn('寫入搜尋紀錄失敗（rules 可能阻擋）：', e.message);
+}
+
+// 從 items 讀取並在前端模糊比對
+try{
+const snap = await getDocs(collection(db,'items'));
+const all = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+const lower = kw.toLowerCase();
+const filtered = all.filter(x=>{
+const t = (x.title||'').toLowerCase();
+const d = (x.description||'').toLowerCase();
+const k = (x.keywords||'').toLowerCase();
+return t.includes(lower) || d.includes(lower) || k.includes(lower);
+});
+renderResults(filtered, kw);
+}catch(e){
+results.innerHTML = `<div class="card"><p>讀取資料失敗：${e.message}</p></div>`;
+}
+
+// 重新載入熱門 & 最近
+loadTrending();
+loadRecent();
+// AI 建議 chips（本地規則產生）
+renderAIChips(kw);
+}
+
+function renderLoading(){
+return `
+<div class="card">
+<div>
+<h3>搜尋中…</h3>
+<p class="meta">請稍候</p>
+</div>
+</div>
+`;
+}
+
+function renderResults(items, kw){
+if(!items.length){
+results.innerHTML = `
+<div class="card">
+<div>
+<h3>找不到「${escapeHtml(kw)}」的結果</h3>
+<p class="meta">試試別的關鍵字，或用更短的詞。</p>
+</div>
+</div>
+`;
+return;
+}
+results.innerHTML = items.map(x=>`
+<div class="card">
+<img class="thumb" src="${escapeAttr(x.imageUrl || 'https://via.placeholder.com/240x160?text=No+Image')}" alt="">
+<div>
+<h3>${escapeHtml(x.title || '無標題')}</h3>
+<p>${escapeHtml(x.description || '')}</p>
+<div class="meta">關鍵字：${escapeHtml(x.keywords || '')}</div>
+</div>
+</div>
+`).join('');
+}
+
+// ====== 熱門 / 最近 ======
+async function loadTrending(){
+try{
+// 取最近 300 筆記錄做本地統計
+const qy = query(collection(db,'searchRecords'), orderBy('ts','desc'), limit(300));
+const snap = await getDocs(qy);
+const cnt = {};
+snap.forEach(d=>{
+const k = (d.data().keyword||'').trim();
+if(!k) return;
+cnt[k] = (cnt[k]||0)+1;
+});
+const top = Object.entries(cnt).sort((a,b)=> b[1]-a[1]).slice(0,10);
+trending.innerHTML = top.map((t,i)=>`
+<div class="row" data-k="${escapeAttr(t[0])}">
+<div style="display:flex; align-items:center; gap:10px;">
+<div class="rank">${i+1}</div>
+<div>${escapeHtml(t[0])}</div>
+</div>
+<div class="meta">${t[1]} 次</div>
+</div>
+`).join('');
+trending.querySelectorAll('.row').forEach(r=>{
+r.addEventListener('click', ()=>{
+q.value = r.dataset.k; doSearch(r.dataset.k);
+});
+});
+}catch(e){
+trending.innerHTML = `<div class="row"><div class="meta">讀取熱門失敗：${e.message}</div></div>`;
+}
+}
+
+async function loadRecent(){
+if(!currentUser){ recent.innerHTML = `<div class="row"><div class="meta">登入後可查看</div></div>`; return; }
+try{
+// 取該使用者最近 10 筆
+const qy = query(
+collection(db,'searchRecords'),
+where('email','==', currentUser.email),
+orderBy('ts','desc'),
+limit(10)
+);
+const snap = await getDocs(qy);
+const rows = [];
+snap.forEach(d=>{
+const k = d.data().keyword || '';
+if(k) rows.push(k);
+});
+if(!rows.length){
+recent.innerHTML = `<div class="row"><div class="meta">尚無紀錄</div></div>`;
+return;
+}
+recent.innerHTML = rows.map((k)=>`
+<div class="row" data-k="${escapeAttr(k)}">
+<div style="display:flex; align-items:center; gap:10px;">
+<div class="rank">•</div>
+<div>${escapeHtml(k)}</div>
+</div>
+<div class="meta">最近</div>
+</div>
+`).join('');
+recent.querySelectorAll('.row').forEach(r=>{
+r.addEventListener('click', ()=>{
+q.value = r.dataset.k; doSearch(r.dataset.k);
+});
+});
+}catch(e){
+recent.innerHTML = `<div class="row"><div class="meta">讀取失敗：${e.message}</div></div>`;
+}
+}
+
+// ====== AI 建議（本地 + Gemini API） ======
+function renderAIChips(keyword){
+  const base = keyword.trim();
+  if(!base){ aiChips.innerHTML=''; return; }
+  const arr = [base, `${base} 是什麼`, `${base} 用法`, `${base} 教學`, `最新 ${base} 資訊`, `${base} 下載`, `${base} 免費資源`, `${base} vs 競品`];
+  aiChips.innerHTML = arr.map(s=>`<button class="chip">${escapeHtml(s)}</button>`).join('');
+  aiChips.querySelectorAll('.chip').forEach(c=>{ c.addEventListener('click', ()=>{ q.value=c.textContent; doSearch(c.textContent); }); });
+}
+
+// ====== helpers ======
+function escapeHtml(s=''){ return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m])); }
+function escapeAttr(s=''){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+// ====== AI 下拉建議 ======
+const aiSuggestList = document.createElement('ul');
+aiSuggestList.style.position = 'absolute';
+aiSuggestList.style.top = '100%';          // 確保在搜尋欄正下方
+aiSuggestList.style.left = '0';
+aiSuggestList.style.width = '100%';        // 跟搜尋欄同寬
+aiSuggestList.style.maxHeight = '200px';
+aiSuggestList.style.overflowY = 'auto';
+aiSuggestList.style.background = '#0f1216';
+aiSuggestList.style.border = '1px solid #20242a';
+aiSuggestList.style.borderRadius = '12px';
+aiSuggestList.style.padding = '0';
+aiSuggestList.style.margin = '4px 0 0 0';  // 和搜尋欄保持距離
+aiSuggestList.style.listStyle = 'none';
+aiSuggestList.style.display = 'none';
+aiSuggestList.style.zIndex = '999';        // 保證在最上層
+searchBox.style.position = 'relative';     // 父層相對定位
+searchBox.appendChild(aiSuggestList);
+
+let selectedIndex=-1;
+
+async function fetchAISuggestions(input){
+  const base=input.trim();
+  if(!base) return [];
+  const local=[base, `${base} 是什麼`, `${base} 用法`, `${base} 教學`, `最新 ${base} 資訊`, `${base} 下載`, `${base} 免費資源`, `${base} vs 競品`];
+  try{
+    const res=await fetch('/api/aiSuggest?q='+encodeURIComponent(base));
+    const data=await res.json();
+    const ai=data.suggestions||[];
+    return [...local,...ai].slice(0,10);
+  }catch(e){ console.warn(e); return local; }
+}
+
+function renderAISuggestions(arr){
+  aiSuggestList.innerHTML=''; selectedIndex=-1;
+  if(!arr.length){ aiSuggestList.style.display='none'; return; }
+  arr.forEach((s,i)=>{
+    const li=document.createElement('li'); li.textContent=s; li.style.padding='8px 12px'; li.style.cursor='pointer'; li.style.color='#cbd0d6';
+    li.onmouseover=()=>{ selectedIndex=i; updateSelection(); };
+    li.onmouseout=()=>{ selectedIndex=-1; updateSelection(); };
+    li.onclick=()=>{ q.value=s; doSearch(s); aiSuggestList.style.display='none'; };
+    aiSuggestList.appendChild(li);
+  });
+  aiSuggestList.style.display='block';
+}
+
+function updateSelection(){
+  const lis=aiSuggestList.querySelectorAll('li');
+  lis.forEach((li,i)=>li.style.background=i===selectedIndex?'#141820':'transparent');
+}
+
+q.addEventListener('input', async ()=>{
+  const val=q.value;
+  const suggestions=await fetchAISuggestions(val);
+  renderAISuggestions(suggestions);
+});
+
+q.addEventListener('keydown',(e)=>{
+  const lis=aiSuggestList.querySelectorAll('li');
+  if(!lis.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); selectedIndex=(selectedIndex+1)%lis.length; updateSelection(); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); selectedIndex=(selectedIndex-1+lis.length)%lis.length; updateSelection(); }
+  if(e.key==='Enter' && selectedIndex>=0){ e.preventDefault(); lis[selectedIndex].click(); }
+});
+
+document.addEventListener('click', e=>{ if(!searchBox.contains(e.target)) aiSuggestList.style.display='none'; });
+
+// ====== 初始熱門 ======
+loadTrending();
+</script>
+</body>
+</html>
